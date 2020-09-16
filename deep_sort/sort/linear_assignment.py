@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 import numpy as np
 # from sklearn.utils.linear_assignment_ import linear_assignment
-from scipy.optimize import linear_sum_assignment as linear_assignment
+from scipy.optimize import linear_sum_assignment as linear_assignment #匈牙利指派算法
 from . import kalman_filter
 
 
@@ -55,8 +55,10 @@ def min_cost_matching(
 
     cost_matrix = distance_metric(
         tracks, detections, track_indices, detection_indices)
+    # 把cost大于阈值(如:0.7)的都设置为阈值大小
     cost_matrix[cost_matrix > max_distance] = max_distance + 1e-5
 
+    #把cost_matrix作为匈牙利算法的输入,得到线性匹配结果
     row_indices, col_indices = linear_assignment(cost_matrix)
 
     matches, unmatched_tracks, unmatched_detections = [], [], []
@@ -66,6 +68,8 @@ def min_cost_matching(
     for row, track_idx in enumerate(track_indices):
         if row not in row_indices:
             unmatched_tracks.append(track_idx)
+    # 如果某个组合的cost值大于阈值,这样的组合还是认为是不match的,相应的,
+    # 还要把组合中的检测框和跟踪框踢到各自的unmatch列表中.
     for row, col in zip(row_indices, col_indices):
         track_idx = track_indices[row]
         detection_idx = detection_indices[col]

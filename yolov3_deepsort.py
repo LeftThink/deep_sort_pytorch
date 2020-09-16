@@ -2,9 +2,11 @@ import os
 import cv2
 import time
 import argparse
+import caffe 
 import torch
 import warnings
 import numpy as np
+from datetime import datetime
 
 from detector import build_detector
 from deep_sort import build_tracker
@@ -12,7 +14,6 @@ from utils.draw import draw_boxes
 from utils.parser import get_config
 from utils.log import get_logger
 from utils.io import write_results
-
 
 class VideoTracker(object):
     def __init__(self, cfg, args, video_path):
@@ -36,8 +37,9 @@ class VideoTracker(object):
             self.vdo = cv2.VideoCapture()
         self.detector = build_detector(cfg, use_cuda=use_cuda)
         self.deepsort = build_tracker(cfg, use_cuda=use_cuda)
-        self.class_names = self.detector.class_names
+        #self.class_names = self.detector.class_names
 
+    #上下文管理器,with的时候调用
     def __enter__(self):
         if self.args.cam != -1:
             ret, frame = self.vdo.read()
@@ -54,10 +56,14 @@ class VideoTracker(object):
 
         if self.args.save_path:
             os.makedirs(self.args.save_path, exist_ok=True)
-
+            
+            video_file = os.path.basename(self.video_path)
+            _,ext = os.path.splitext(video_file)
             # path of saved video and results
-            self.save_video_path = os.path.join(self.args.save_path, "results.avi")
-            self.save_results_path = os.path.join(self.args.save_path, "results.txt")
+            ts = datetime.strftime(datetime.now(),"%Y%m%d%H%M")
+            video_file_new = "{:s}_{:s}{:s}".format(video_file,ts,ext)
+            self.save_video_path = os.path.join(self.args.save_path, video_file_new)
+            self.save_results_path = os.path.join(self.args.save_path, "{:s}{:s}".format(video_file_new,'.txt'))
 
             # create video writer
             fourcc = cv2.VideoWriter_fourcc(*'MJPG')
@@ -68,6 +74,7 @@ class VideoTracker(object):
 
         return self
 
+    #上下文管理器,width结束时调用
     def __exit__(self, exc_type, exc_value, exc_traceback):
         if exc_type:
             print(exc_type, exc_value, exc_traceback)
@@ -82,22 +89,42 @@ class VideoTracker(object):
 
             start = time.time()
             _, ori_im = self.vdo.retrieve()
-            im = cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB)
+            im = np.copy(ori_im)
+            #im = cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB)
 
             # do detection
             bbox_xywh, cls_conf, cls_ids = self.detector(im)
+            #print(bbox_xywh)
+            #print(cls_conf)
 
             # select person class
-            mask = cls_ids == 0
+            mask = cls_ids == 0 #for yolov3
+            mask =  cls_ids == 1 #for weilei head
+            mask = cls_ids != 0 #for liyang head
 
             bbox_xywh = bbox_xywh[mask]
+            # add by bigz
+            if len(bbox_xywh) == 0:
+                continue
+
+            #for test
+            # for b in bbox_xywh:
+            #     cv2.rectangle(ori_im,(int(b[0]),int(b[1])),(int(b[0])+int(b[2]),int(b[1])+int(b[3])),(255,0,0),1,0)
+            # cv2.imshow('preview', ori_im)
+            # if (cv2.waitKey(-1) & 0xFF) != ord('q'):
+            #     continue
+            # else:
+            #     break
+
             # bbox dilation just in case bbox too small, delete this line if using a better pedestrian detector
-            bbox_xywh[:, 3:] *= 1.2
+            #bbox_xywh[:, 3:] *= 1.2
             cls_conf = cls_conf[mask]
 
             # do tracking
+            # 怀疑update改动了bbox_xywh里面的值,引起了形变?
             outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
-
+            import ipdb 
+            ipdb.set_trace()
             # draw boxes for visualization
             if len(outputs) > 0:
                 bbox_tlwh = []
@@ -142,7 +169,6 @@ def parse_args():
     parser.add_argument("--camera", action="store", dest="cam", type=int, default="-1")
     return parser.parse_args()
 
-
 if __name__ == "__main__":
     args = parse_args()
     cfg = get_config()
@@ -151,3 +177,4 @@ if __name__ == "__main__":
 
     with VideoTracker(cfg, args, video_path=args.VIDEO_PATH) as vdo_trk:
         vdo_trk.run()
+

@@ -54,7 +54,8 @@ def write_results(filename, results, data_type):
 #     logger.info('Save results to {}'.format(filename))
 
 
-def read_results(filename, data_type: str, is_gt=False, is_ignore=False):
+#def read_results(filename, data_type: str, is_gt=False, is_ignore=False):
+def read_results(filename, data_type, is_gt=False, is_ignore=False):
     if data_type in ('mot', 'lab'):
         read_fun = read_mot_results
     else:

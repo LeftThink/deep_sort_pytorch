@@ -82,6 +82,10 @@ class KalmanFilter(object):
             10 * self._std_weight_velocity * measurement[3],
             1e-5,
             10 * self._std_weight_velocity * measurement[3]]
+        """
+        np.diag(x),当x是一个1维数组时,输出一个以一维数组为对角线元素的矩阵,x为2维矩阵时,输出矩阵的对角线元素;
+        np.square(x),计算x中各元素的平方;
+        """
         covariance = np.diag(np.square(std))
         return mean, covariance
 

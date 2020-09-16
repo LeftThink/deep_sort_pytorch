@@ -84,11 +84,13 @@ class Net(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-        x = self.avgpool(x)
-        x = x.view(x.size(0),-1)
+        x = self.avgpool(x) #(n,512,1,1)
+        #import ipdb 
+        #ipdb.set_trace()
+        x = x.view(x.size(0),-1) #(n,512)
         # B x 128
         if self.reid:
-            x = x.div(x.norm(p=2,dim=1,keepdim=True))
+            x = x.div(x.norm(p=2,dim=1,keepdim=True)) #torch.norm求范数
             return x
         # classifier
         x = self.classifier(x)

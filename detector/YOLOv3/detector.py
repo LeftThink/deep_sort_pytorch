@@ -40,7 +40,7 @@ class YOLOv3(object):
 
         # forward
         with torch.no_grad():
-            img = img.to(self.device)
+            img = img.to(self.device) 
             out_boxes = self.net(img)
             boxes = get_all_boxes(out_boxes, self.conf_thresh, self.num_classes,
                                   use_cuda=self.use_cuda)  # batch size is 1
@@ -63,6 +63,7 @@ class YOLOv3(object):
             bbox *= torch.FloatTensor([[width, height, width, height]])
             cls_conf = boxes[:, 5]
             cls_ids = boxes[:, 6].long()
+    
         return bbox.numpy(), cls_conf.numpy(), cls_ids.numpy()
 
     def load_class_names(self, namesfile):

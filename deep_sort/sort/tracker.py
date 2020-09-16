@@ -64,25 +64,36 @@ class Tracker:
             A list of detections at the current time step.
 
         """
-        # Run matching cascade.
+        # Run matching cascade. 级联匹配
         matches, unmatched_tracks, unmatched_detections = \
             self._match(detections)
 
         # Update track set.
+        # 针对match的,要使用检测结果去更新相应的tracker参数
         for track_idx, detection_idx in matches:
             self.tracks[track_idx].update(
                 self.kf, detections[detection_idx])
         for track_idx in unmatched_tracks:
             self.tracks[track_idx].mark_missed()
+
+        #利用每个检测框来创建其对应的新tracker,毕竟这些个检测框没有匹配上嘛
         for detection_idx in unmatched_detections:
             self._initiate_track(detections[detection_idx])
+        # 更新tracks,踢掉删除了的
         self.tracks = [t for t in self.tracks if not t.is_deleted()]
 
         # Update distance metric.
+        # 更新已经确认的track的特征集
         active_targets = [t.track_id for t in self.tracks if t.is_confirmed()]
         features, targets = [], []
+        """
+        把这些active_target之前保存的feature(之前每帧只要能匹配上,都会把与之匹配的det的feature保存
+        下来)用于更新卡尔曼滤波的distance metric
+        f1,f2,f3,f4,f5,f6,f7,...
+        id1,id1,id1,id2,id2,id2,id2,...
+        """
         for track in self.tracks:
-            if not track.is_confirmed():
+            if not track.is_confirmed(): 
                 continue
             features += track.features
             targets += [track.track_id for _ in track.features]
@@ -102,25 +113,31 @@ class Tracker:
 
             return cost_matrix
 
+        #已确认的和未确认的tracker
         # Split track set into confirmed and unconfirmed tracks.
         confirmed_tracks = [
             i for i, t in enumerate(self.tracks) if t.is_confirmed()]
         unconfirmed_tracks = [
             i for i, t in enumerate(self.tracks) if not t.is_confirmed()]
 
+        # 对于之前已经确认的track(confirmed tracks),将它们与当前的检测结果进行级联匹配
+        # 为什么叫级联匹配?因为这个匹配操作需要从刚刚匹配成功的track循环遍历到最多已经有
+        # cascade_depth没有匹配的track
         # Associate confirmed tracks using appearance features.
         matches_a, unmatched_tracks_a, unmatched_detections = \
             linear_assignment.matching_cascade(
                 gated_metric, self.metric.matching_threshold, self.max_age,
                 self.tracks, detections, confirmed_tracks)
-
         # Associate remaining tracks together with unconfirmed tracks using IOU.
+        # unconfirmed tracks和上一步没有匹配上的track(unmatched_tracks_a)一起组成iou_track_candidates,
+        # 与还没有匹配上的检测结果(unmatched_detections)进行iou匹配
         iou_track_candidates = unconfirmed_tracks + [
             k for k in unmatched_tracks_a if
             self.tracks[k].time_since_update == 1]
         unmatched_tracks_a = [
             k for k in unmatched_tracks_a if
             self.tracks[k].time_since_update != 1]
+        # 计算iou_track_candidates,unmatched_detections这些框两两之间的iou,经由1-iou得到cost_matrix
         matches_b, unmatched_tracks_b, unmatched_detections = \
             linear_assignment.min_cost_matching(
                 iou_matching.iou_cost, self.max_iou_distance, self.tracks,
@@ -130,9 +147,11 @@ class Tracker:
         unmatched_tracks = list(set(unmatched_tracks_a + unmatched_tracks_b))
         return matches, unmatched_tracks, unmatched_detections
 
+    #利用检测框创建一条新的track
     def _initiate_track(self, detection):
-        mean, covariance = self.kf.initiate(detection.to_xyah())
+        #根据初始检测位置初始化新kf滤波器的mean和variance
+        mean, covariance = self.kf.initiate(detection.to_xyah()) #a:aspect,h:height 
         self.tracks.append(Track(
             mean, covariance, self._next_id, self.n_init, self.max_age,
             detection.feature))
-        self._next_id += 1
+        self._next_id += 1 #这个就是追踪的id计数

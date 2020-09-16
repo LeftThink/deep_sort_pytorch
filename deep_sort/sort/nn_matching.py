@@ -148,8 +148,10 @@ class NearestNeighborDistanceMetric(object):
 
         """
         for feature, target in zip(features, targets):
+            #当然是个1vN的,一个target id有一个feature链
             self.samples.setdefault(target, []).append(feature)
             if self.budget is not None:
+                #取倒数self.budget个feature,要不断更新嘛
                 self.samples[target] = self.samples[target][-self.budget:]
         self.samples = {k: self.samples[k] for k in active_targets}
 

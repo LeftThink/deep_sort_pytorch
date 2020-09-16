@@ -20,8 +20,6 @@ class Extractor(object):
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ])
-        
-
 
     def _preprocess(self, im_crops):
         """
@@ -38,12 +36,15 @@ class Extractor(object):
         im_batch = torch.cat([self.norm(_resize(im, self.size)).unsqueeze(0) for im in im_crops], dim=0).float()
         return im_batch
 
-
     def __call__(self, im_crops):
+        #im_batch.shape->(n,3,128,64)
         im_batch = self._preprocess(im_crops)
+        #import ipdb 
+        #ipdb.set_trace()
+
         with torch.no_grad():
             im_batch = im_batch.to(self.device)
-            features = self.net(im_batch)
+            features = self.net(im_batch) #shape->(n,512)
         return features.cpu().numpy()
 
 

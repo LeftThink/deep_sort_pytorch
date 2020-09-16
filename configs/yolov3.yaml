@@ -5,3 +5,20 @@ YOLOV3:
 
   SCORE_THRESH: 0.5
   NMS_THRESH: 0.4
+SSD:
+  #PROTOTXT: "/home/zuosi/deep_sort_pytorch/detector/Caffe/pedestrian/deploy.prototxt"
+  #WEIGHT: "/home/zuosi/deep_sort_pytorch/detector/Caffe/pedestrian/CAR_SSD-KYSiNetV3_VGGK53_8X_FPN_H5A20x2_C3_640x360_1028_snapshot_iter_456000.caffemodel"
+  #SCORE_THRESH: 0.5
+
+  #PROTOTXT: "./detector/Caffe/pedestrian/deploy.prototxt"
+  #WEIGHT: "./detector/Caffe/pedestrian/PED_SSD_H5A15-KYSiNetV3_VGGK735_8X_FPN_640x360_anchor15x1_C2_0914_snapshot_iter_672000.caffemodel"
+  #SCORE_THRESH: 0.8
+
+  PROTOTXT: "./detector/Caffe/passenger_counting_0911/deploy.prototxt"
+  WEIGHT: "./detector/Caffe/passenger_counting_0911/FACE_SSD-KYSiNetV4_VGG_8X_FPN_H4A16x1_C2_320x180_0728_snapshot_iter_302000.caffemodel"
+  SCORE_THRESH: 0.6
+
+  #liyang 
+  # PROTOTXT: "/home/liyang/models/pc_0914/model-D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x3_C3_320x180_20200914/deploy.prototxt"
+  # WEIGHT: "/home/liyang/models/pc_0914/model-D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x3_C3_320x180_20200914/backup/D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x3_C3_320x180_20200914_snapshot_iter_202000.caffemodel"
+  # SCORE_THRESH: 0.8

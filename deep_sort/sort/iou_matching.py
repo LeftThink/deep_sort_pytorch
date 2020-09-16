@@ -69,13 +69,14 @@ def iou_cost(tracks, detections, track_indices=None,
     if detection_indices is None:
         detection_indices = np.arange(len(detections))
 
+    # 初始化NxM cost矩阵,N为track,M为detection
     cost_matrix = np.zeros((len(track_indices), len(detection_indices)))
     for row, track_idx in enumerate(track_indices):
         if tracks[track_idx].time_since_update > 1:
-            cost_matrix[row, :] = linear_assignment.INFTY_COST
+            cost_matrix[row, :] = linear_assignment.INFTY_COST #先给个大值
             continue
 
-        bbox = tracks[track_idx].to_tlwh()
+        bbox = tracks[track_idx].to_tlwh() #这个box来自于track,但是这个track中的box是带预测性质的...
         candidates = np.asarray([detections[i].tlwh for i in detection_indices])
         cost_matrix[row, :] = 1. - iou(bbox, candidates)
     return cost_matrix
