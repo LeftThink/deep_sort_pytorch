@@ -52,8 +52,8 @@ def draw_boxes(img, bbox, identities=None, offset=(0,0)):
         cv2.putText(img,label,(x1,y1+t_size[1]+4), cv2.FONT_HERSHEY_PLAIN, 2, [255,255,255], 2)
     
         h,w,_ = img.shape
-        up_line = int(h*1/4.+h*1/6.)
-        down_line = int(h*3/4.-h*1/6.)
+        up_line = int(h*1/4.+h*1/8.)
+        down_line = int(h*3/4.-h*1/8.)
         cv2.line(img, (0,up_line),(w,up_line),(0,255,0),3)
         cv2.line(img, (0,down_line),(w,down_line),(0,255,0),3)
 

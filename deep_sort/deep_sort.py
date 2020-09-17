@@ -2,8 +2,6 @@
 import numpy as np
 import torch
 
-from .deep.feature_extractor import Extractor
-from .sort.nn_matching import NearestNeighborDistanceMetric
 from .sort.preprocessing import non_max_suppression
 from .sort.detection import Detection
 from .sort.tracker import Tracker
@@ -16,27 +14,14 @@ class DeepSort(object):
     def __init__(self, model_path, max_dist=0.2, min_confidence=0.3, nms_max_overlap=1.0, max_iou_distance=0.7, max_age=70, n_init=3, nn_budget=100, use_cuda=True):
         self.min_confidence = min_confidence
         self.nms_max_overlap = nms_max_overlap #0.7
-
-        #传说中的特征描述子?
-        self.extractor = Extractor(model_path, use_cuda=use_cuda)
-
-        max_cosine_distance = max_dist
-        """
-        对每一个检测块dj求一个特征向量rj(通过cnn网络计算对应的128维feature向量rj),限制条件是||rj||=1,作者对每一个跟踪
-        目标构建一个gallary,存储每一个跟踪目标成功关联的最近100帧的特征向量.计算第i个跟踪器的最近100个成功关联的特征集与
-        当前帧第j个检测结果的特征向量间的最小余弦距离
-        """
-        nn_budget = 100 
-        metric = NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
         #max_age,表示在一条轨迹在被删除之前允许的最大miss次数?
-        self.tracker = Tracker(metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
+        self.tracker = Tracker(max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
 
     def update(self, bbox_xywh, confidences, ori_img):
         self.height, self.width = ori_img.shape[:2]
         # generate detections
-        features = self._get_features(bbox_xywh, ori_img) #什么feature?shape->(1,512)
         bbox_tlwh = self._xywh_to_tlwh(bbox_xywh) #top left width and height
-        detections = [Detection(bbox_tlwh[i], conf, features[i]) for i,conf in enumerate(confidences) if conf>self.min_confidence]
+        detections = [Detection(bbox_tlwh[i], conf) for i,conf in enumerate(confidences) if conf>self.min_confidence]
 
         # run on non-maximum supression
         boxes = np.array([d.tlwh for d in detections])
@@ -111,17 +96,3 @@ class DeepSort(object):
         w = int(x2-x1)
         h = int(y2-y1)
         return t,l,w,h
-    
-    def _get_features(self, bbox_xywh, ori_img):
-        im_crops = []
-        for box in bbox_xywh:
-            x1,y1,x2,y2 = self._xywh_to_xyxy(box)
-            im = ori_img[y1:y2,x1:x2]
-            im_crops.append(im)
-        if im_crops:
-            features = self.extractor(im_crops) #提取啥呢?
-        else:
-            features = np.array([])
-        return features
-
-

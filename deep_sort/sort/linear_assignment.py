@@ -53,6 +53,7 @@ def min_cost_matching(
     if len(detection_indices) == 0 or len(track_indices) == 0:
         return [], track_indices, detection_indices  # Nothing to match.
 
+    #计算出tracks与detections之间的cost矩阵
     cost_matrix = distance_metric(
         tracks, detections, track_indices, detection_indices)
     # 把cost大于阈值(如:0.7)的都设置为阈值大小
