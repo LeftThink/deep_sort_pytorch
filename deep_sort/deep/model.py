@@ -90,6 +90,9 @@ class Net(nn.Module):
         x = x.view(x.size(0),-1) #(n,512)
         # B x 128
         if self.reid:
+            #归一化
+            # import ipdb
+            # ipdb.set_trace()
             x = x.div(x.norm(p=2,dim=1,keepdim=True)) #torch.norm求范数
             return x
         # classifier

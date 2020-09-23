@@ -123,8 +123,8 @@ class VideoTracker(object):
             # do tracking
             # 怀疑update改动了bbox_xywh里面的值,引起了形变?
             outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
-            import ipdb 
-            ipdb.set_trace()
+            #import ipdb 
+            #ipdb.set_trace()
             # draw boxes for visualization
             if len(outputs) > 0:
                 bbox_tlwh = []

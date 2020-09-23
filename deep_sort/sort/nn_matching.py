@@ -48,9 +48,13 @@ def _cosine_distance(a, b, data_is_normalized=False):
         contains the squared distance between `a[i]` and `b[j]`.
 
     """
+    # import ipdb 
+    # ipdb.set_trace()
     if not data_is_normalized:
+        #np.linalg.norm求范数,由参数ord决定范数类型,默认为2范数
         a = np.asarray(a) / np.linalg.norm(a, axis=1, keepdims=True)
         b = np.asarray(b) / np.linalg.norm(b, axis=1, keepdims=True)
+    #求是那个求余弦角的公式,没问题
     return 1. - np.dot(a, b.T)
 
 
@@ -90,7 +94,9 @@ def _nn_cosine_distance(x, y):
     ndarray
         A vector of length M that contains for each entry in `y` the
         smallest cosine distance to a sample in `x`.
-
+        x中的sample是表示一条track中存储了多条feature,y中的每个检测框feature要和
+        track中的每条featur计算cosine角,然后选出其中代价最小的值作为訪检测框与訪轨迹的
+        最终cost
     """
     distances = _cosine_distance(x, y)
     return distances.min(axis=0)
@@ -153,6 +159,13 @@ class NearestNeighborDistanceMetric(object):
             if self.budget is not None:
                 #取倒数self.budget个feature,要不断更新嘛
                 self.samples[target] = self.samples[target][-self.budget:]
+        """
+        {
+            'track_id1': [[f1],[f2],[f3],...],
+            'track_id2': [[f1],[f2],...],
+            ...
+        }
+        """
         self.samples = {k: self.samples[k] for k in active_targets}
 
     def distance(self, features, targets):
@@ -173,7 +186,11 @@ class NearestNeighborDistanceMetric(object):
             `targets[i]` and `features[j]`.
 
         """
+        #计算当前帧每个新检测结果的深度特征与这一层中每个track已保存的特征集之间的余弦距离矩阵
         cost_matrix = np.zeros((len(targets), len(features)))
         for i, target in enumerate(targets):
+            #轨迹特征集,当前检测框特征
+            #具体过程是针对track的每个特征集,计算它们与当前这M个det的特征之间的cost(1-余弦距离),
+            #然后取最小值作为訪track与检测结果之间的计算值.
             cost_matrix[i, :] = self._metric(self.samples[target], features)
         return cost_matrix

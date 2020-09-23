@@ -124,20 +124,31 @@ def matching_cascade(
         track_indices = list(range(len(tracks)))
     if detection_indices is None:
         detection_indices = list(range(len(detections)))
-
+    
+    # import ipdb 
+    # ipdb.set_trace()
+    
     unmatched_detections = detection_indices
     matches = []
     for level in range(cascade_depth):
         if len(unmatched_detections) == 0:  # No detections left
             break
 
+        #对于所有的tracks来说其time_since_update可能为0,1,2,3...max_age
+        #当一个目标长时间被遮挡后,kalman滤波器预测的不确定性就会大大增加,状态空间内的可观察性就会大
+        #大降低。假如此时两个跟踪器竞争同一个检测结果的匹配权,往往遮挡时间较长的那条轨迹因为长时间未更新
+        #位置信息,追踪预测位置的不确定性更大,协方差更大,马氏距离计算时使用了协方差的倒数,因此马氏距离会更小,
+        #因此使得检测结果更可能和遮挡时间较长的那条轨迹相关联,这种不理想的效果往往会破坏追踪的持续性.
+        #级联匹配的核心思想就是由小到大对消失时间相同的轨迹进行匹配,这样首先就保证了对最近
+        #出现的目标赋予最大的优先权
         track_indices_l = [
             k for k in track_indices
-            if tracks[k].time_since_update == 1 + level
+            if tracks[k].time_since_update == 1 + level #这里都是confirmed tracks
         ]
         if len(track_indices_l) == 0:  # Nothing to match at this level
             continue
 
+        #计算当前帧每个新检测结果的深度特征与这一层中每个track已保存的特征集之间的余弦距离矩阵
         matches_l, _, unmatched_detections = \
             min_cost_matching(
                 distance_metric, max_distance, tracks, detections,
@@ -184,12 +195,19 @@ def gate_cost_matrix(
         Returns the modified cost matrix.
 
     """
+    #deepsort使用检测框与跟踪预测框之间的马氏距离来描述运动关联程度,并且从逆x^2分布
+    #计算得来的95%置信区间对马氏距离进行阈值化处理.
+    """
+    这里计算的是检测框和跟踪预测框之间的距离,也就是计算其相似度,在已经给出来的cost_matrix中,
+    已经包含了轨迹和detection之间的用已知的方法(如cos角)算出来的一个cost,这里再计算一个马氏距离.
+    这里实际上是做了一个运动约束
+    """
     gating_dim = 2 if only_position else 4
-    gating_threshold = kalman_filter.chi2inv95[gating_dim]
-    measurements = np.asarray(
-        [detections[i].to_xyah() for i in detection_indices])
+    gating_threshold = kalman_filter.chi2inv95[gating_dim] #95%置信区间
+    #检测框
+    measurements = np.asarray([detections[i].to_xyah() for i in detection_indices])
     for row, track_idx in enumerate(track_indices):
-        track = tracks[track_idx]
+        track = tracks[track_idx] #跟踪框
         gating_distance = kf.gating_distance(
             track.mean, track.covariance, measurements, only_position)
         cost_matrix[row, gating_distance > gating_threshold] = gated_cost

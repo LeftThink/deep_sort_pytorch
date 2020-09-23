@@ -69,10 +69,9 @@ class Tracker:
             self._match(detections)
 
         # Update track set.
-        # 针对match的,要使用检测结果去更新相应的tracker参数
+        # 针对match的,要使用检测结果去更新相应的track参数以及訪轨迹的状态更新
         for track_idx, detection_idx in matches:
-            self.tracks[track_idx].update(
-                self.kf, detections[detection_idx])
+            self.tracks[track_idx].update(self.kf, detections[detection_idx])
         for track_idx in unmatched_tracks:
             self.tracks[track_idx].mark_missed()
 
@@ -97,16 +96,18 @@ class Tracker:
                 continue
             features += track.features
             targets += [track.track_id for _ in track.features]
-            track.features = []
+            #这个把特征集清空了...更新已经确认的track的特征集
+            track.features = [] 
         self.metric.partial_fit(
             np.asarray(features), np.asarray(targets), active_targets)
 
     def _match(self, detections):
-
+        #计算当前帧每个新检测结果的深度特征与这一层中每个track已保存的特征集之间的余弦距离矩阵
         def gated_metric(tracks, dets, track_indices, detection_indices):
             features = np.array([dets[i].feature for i in detection_indices])
             targets = np.array([tracks[i].track_id for i in track_indices])
             cost_matrix = self.metric.distance(features, targets)
+            #运动信息约束
             cost_matrix = linear_assignment.gate_cost_matrix(
                 self.kf, cost_matrix, tracks, dets, track_indices,
                 detection_indices)
@@ -131,12 +132,14 @@ class Tracker:
         # Associate remaining tracks together with unconfirmed tracks using IOU.
         # unconfirmed tracks和上一步没有匹配上的track(unmatched_tracks_a)一起组成iou_track_candidates,
         # 与还没有匹配上的检测结果(unmatched_detections)进行iou匹配
+        #为什么要单独考虑等于1的情况?因为要做纯IoU的匹配当然是要拿最近的,假如time_since_update比较大,
+        #那说明已经是老远的box了,匹配可能会出问题.所以,这个相当于是对已有match的一个补充.
         iou_track_candidates = unconfirmed_tracks + [
             k for k in unmatched_tracks_a if
-            self.tracks[k].time_since_update == 1]
+            self.tracks[k].time_since_update == 1] 
         unmatched_tracks_a = [
             k for k in unmatched_tracks_a if
-            self.tracks[k].time_since_update != 1]
+            self.tracks[k].time_since_update != 1] #这个值只能是0,1,2,3?
         # 计算iou_track_candidates,unmatched_detections这些框两两之间的iou,经由1-iou得到cost_matrix
         matches_b, unmatched_tracks_b, unmatched_detections = \
             linear_assignment.min_cost_matching(

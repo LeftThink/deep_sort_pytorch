@@ -119,13 +119,15 @@ class Track:
             The Kalman filter.
 
         """
+        #利用卡尔曼滤波得到跟踪预测结果以及预测的协方差,它们都属于先验估计
+        #预测是每一帧都会要做的
         self.mean, self.covariance = kf.predict(self.mean, self.covariance)
         self.age += 1
         self.time_since_update += 1
 
     def update(self, kf, detection):
         """Perform Kalman filter measurement update step and update the feature
-        cache.
+        cache.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
 
         Parameters
         ----------
@@ -135,8 +137,10 @@ class Track:
             The associated detection.
 
         """
+        #结合预测值和当前检测值,求得修正后的值
         self.mean, self.covariance = kf.update(
             self.mean, self.covariance, detection.to_xyah())
+        #detection的深度特征保存在訪track的特征集合中
         self.features.append(detection.feature)
 
         self.hits += 1
