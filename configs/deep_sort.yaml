@@ -4,7 +4,7 @@ DEEPSORT:
   MIN_CONFIDENCE: 0.3
   NMS_MAX_OVERLAP: 0.5
   MAX_IOU_DISTANCE: 0.7
-  MAX_AGE: 3 #70
-  N_INIT: 2 #default:3
-  NN_BUDGET: 100
+  MAX_AGE: 10 #70,一条轨迹被删除前允许的最大miss次数
+  N_INIT: 3 #default:3,一条轨迹被确认所需要的帧数
+  NN_BUDGET: 100 #轨迹特征集中存储的特征向量的数量
   
