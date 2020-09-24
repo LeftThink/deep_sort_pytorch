@@ -75,6 +75,10 @@ class Track:
         self._n_init = n_init
         self._max_age = max_age
 
+        self.features = []
+        if feature is not None:
+            self.features.append(feature)
+
     def to_tlwh(self):
         """Get current position in bounding box format `(top left x, top left y,
         width, height)`.
@@ -119,6 +123,8 @@ class Track:
 
         """
         self.mean = detection.to_xyah() 
+        self.features.append(detection.feature)
+        
         self.hits += 1
         self.time_since_update = 0
         #如果连续命中n_init帧,则将状态改为Confirmed

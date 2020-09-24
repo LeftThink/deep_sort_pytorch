@@ -52,38 +52,60 @@ def draw_boxes(img, bbox, identities=None, offset=(0,0)):
         cv2.putText(img,label,(x1,y1+t_size[1]+4), cv2.FONT_HERSHEY_PLAIN, 2, [255,255,255], 2)
     
         h,w,_ = img.shape
-        up_line = int(h*1/4.+h*1/8.)
-        down_line = int(h*3/4.-h*1/8.)
-        cv2.line(img, (0,up_line),(w,up_line),(0,255,0),3)
-        cv2.line(img, (0,down_line),(w,down_line),(0,255,0),3)
+        # up_line = int(h*1/4.+h*1/8.)
+        # down_line = int(h*3/4.-h*1/8.)
+        # cv2.line(img, (0,up_line),(w,up_line),(0,255,0),3)
+        # cv2.line(img, (0,down_line),(w,down_line),(0,255,0),3)
 
-        #stat in/out passenger 
+        # #stat in/out passenger 
+        # if passenger_cnt_stat.get(key) is None:
+        #     if cy < up_line: 
+        #         passenger_cnt_stat[key] = {'up':1,'mid':0,'down':0}
+        #     elif cy > down_line:
+        #         passenger_cnt_stat[key] = {'up':0,'mid':0,'down':1}
+        # else:
+        #     val = passenger_cnt_stat[key]
+        #     if cy < up_line:
+        #         if val['down'] and val['mid'] and not val['up']:
+        #             in_passenger_cnt += 1
+        #             val['up'] = 1
+        #             val['mid'] = 0
+        #             val['down'] = 0
+        #         else:
+        #             val['up'] = 1
+        #     elif cy > down_line:
+        #         if val['up'] and val['mid'] and not val['down']:
+        #             out_passenger_cnt += 1
+        #             val['down'] = 1
+        #             val['mid'] = 0
+        #             val['up'] = 0
+        #         else:
+        #             val['down'] = 1
+        #     else:
+        #         val['mid'] = 1
+        
+        line = int(1/2.*h)
+        cv2.line(img, (0,line),(w,line),(0,255,0),3)
         if passenger_cnt_stat.get(key) is None:
-            if cy < up_line: 
-                passenger_cnt_stat[key] = {'up':1,'mid':0,'down':0}
-            elif cy > down_line:
-                passenger_cnt_stat[key] = {'up':0,'mid':0,'down':1}
+            if cy <= line:
+                passenger_cnt_stat[key] = {'down':0,'up':1}
+            else:
+                passenger_cnt_stat[key] = {'down':1,'up':0}
         else:
             val = passenger_cnt_stat[key]
-            if cy < up_line:
-                if val['down'] and val['mid'] and not val['up']:
+            if cy <= line:
+                if val['down'] and not val['up']:
                     in_passenger_cnt += 1
                     val['up'] = 1
-                    val['mid'] = 0
-                    val['down'] = 0
                 else:
                     val['up'] = 1
-            elif cy > down_line:
-                if val['up'] and val['mid'] and not val['down']:
+            else:
+                if val['up'] and not val['down']:
                     out_passenger_cnt += 1
                     val['down'] = 1
-                    val['mid'] = 0
-                    val['up'] = 0
                 else:
-                    val['down'] = 1
-            else:
-                val['mid'] = 1
-
+                    val['down'] =1
+                    
         in_cnt = "in:{:d}".format(in_passenger_cnt)
         t_size = cv2.getTextSize(in_cnt, cv2.FONT_HERSHEY_PLAIN, 5 , 5)[0] #获取文字的宽度和高度
         cv2.putText(img,in_cnt,(w-t_size[0]-100,50), cv2.FONT_HERSHEY_PLAIN, 4, [255,255,255], 4)

@@ -57,6 +57,8 @@ def min_cost_matching(
     cost_matrix = distance_metric(
         tracks, detections, track_indices, detection_indices)
     # 把cost大于阈值(如:0.7)的都设置为阈值大小
+    # import ipdb 
+    # ipdb.set_trace()
     cost_matrix[cost_matrix > max_distance] = max_distance + 1e-5
 
     #把cost_matrix作为匈牙利算法的输入,得到线性匹配结果
