@@ -1,6 +1,7 @@
 # vim: expandtab:ts=4:sw=4
 from __future__ import absolute_import
 import numpy as np
+from . import kalman_filter
 from . import linear_assignment
 from . import iou_matching
 from .track import Track
@@ -40,7 +41,8 @@ class Tracker:
         self.max_iou_distance = max_iou_distance
         self.max_age = max_age
         self.n_init = n_init
-
+        self.kf = None 
+        self.kf = kalman_filter.KalmanFilter()
         self.tracks = []
         self._next_id = 1
 
@@ -49,7 +51,7 @@ class Tracker:
         This function should be called once every time step,before 'update'.
         """
         for track in self.tracks:
-            track.predict()
+            track.predict(self.kf)
 
     def update(self, detections):
         """Perform measurement update and track management.
@@ -65,16 +67,13 @@ class Tracker:
             self._match(detections)
         #print(matches,unmatched_tracks,unmatched_detections)
         # Update track set.
-        # 针对match的,要使用检测结果去更新相应的tracker参数
         for track_idx, detection_idx in matches:
-            self.tracks[track_idx].update(detections[detection_idx])
+            self.tracks[track_idx].update(detections[detection_idx], self.kf)
         for track_idx in unmatched_tracks:
             self.tracks[track_idx].mark_missed()
 
-        #利用每个检测框来创建其对应的新tracker,毕竟这些个检测框没有匹配上嘛
         for detection_idx in unmatched_detections:
             self._initiate_track(detections[detection_idx])
-        # 更新tracks,踢掉删除了的
         self.tracks = [t for t in self.tracks if not t.is_deleted()]
 
     def _match(self, detections):
@@ -83,9 +82,7 @@ class Tracker:
                 self.tracks, detections)        
         return matches, unmatched_tracks, unmatched_detections
 
-    #利用检测框创建一条新的track
     def _initiate_track(self, detection):
-        #根据初始检测位置初始化新kf滤波器的mean和variance
-        mean = detection.to_xyah() #a:aspect,h:height 
-        self.tracks.append(Track(mean, self._next_id, self.n_init, self.max_age))
-        self._next_id += 1 #这个就是追踪的id计数
+        self.tracks.append(Track(self._next_id, self.n_init, self.max_age, 
+            detection, self.kf))
+        self._next_id += 1 

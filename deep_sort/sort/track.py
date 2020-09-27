@@ -37,10 +37,6 @@ class Track:
     max_age : int
         The maximum number of consecutive misses before the track state is
         set to `Deleted`.
-    feature : Optional[ndarray]
-        Feature vector of the detection this track originates from. If not None,
-        this feature is added to the `features` cache.
-
     Attributes
     ----------
     mean : ndarray
@@ -57,15 +53,13 @@ class Track:
         Total number of frames since last measurement update.
     state : TrackState
         The current track state.
-    features : List[ndarray]
-        A cache of features. On each measurement update, the associated feature
-        vector is added to this list.
-
     """
 
-    def __init__(self, mean, track_id, n_init, max_age,
-                 feature=None):
-        self.mean = mean
+    def __init__(self, track_id, n_init, max_age, detection, kf=None):
+        if kf is not None:
+            self.mean,self.covariance = kf.initiate(detection.to_xyah())
+        else:
+            self.mean,self.covariance = detection.to_xyah(),None
         self.track_id = track_id
         self.hits = 1
         self.age = 1
@@ -104,13 +98,15 @@ class Track:
         ret[2:] = ret[:2] + ret[2:]
         return ret
 
-    def predict(self):
+    def predict(self, kf=None):
         """
         """
+        if kf is not None:
+            self.mean,self.covariance = kf.predict(self.mean, self.covariance)
         self.age += 1
         self.time_since_update += 1
 
-    def update(self, detection):
+    def update(self, detection, kf=None):
         """
         Parameters
         ----------
@@ -118,20 +114,21 @@ class Track:
             The associated detection.
 
         """
-        self.mean = detection.to_xyah() 
+        if kf is not None:
+            self.mean, self.covariance = kf.update(
+                self.mean, self.covariance, detection.to_xyah())
+        else:
+            self.mean = detection.to_xyah()
         self.hits += 1
         self.time_since_update = 0
-        #如果连续命中n_init帧,则将状态改为Confirmed
         if self.state == TrackState.Tentative and self.hits >= self._n_init:
             self.state = TrackState.Confirmed
 
     def mark_missed(self):
         """Mark this track as missed (no association at the current time step).
         """
-        # 如果这个track还处于未确认状态则直接删除
         if self.state == TrackState.Tentative:
             self.state = TrackState.Deleted
-        # 如果这个track之前已经确认过,但是已经连续max_age帧没能匹配到检测结果了,也认为track无效
         elif self.time_since_update > self._max_age:
             self.state = TrackState.Deleted
 

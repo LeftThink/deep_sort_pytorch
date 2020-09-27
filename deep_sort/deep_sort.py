@@ -11,10 +11,10 @@ __all__ = ['DeepSort']
 
 
 class DeepSort(object):
-    def __init__(self, model_path, max_dist=0.2, min_confidence=0.3, nms_max_overlap=1.0, max_iou_distance=0.7, max_age=70, n_init=3, nn_budget=100, use_cuda=True):
+    def __init__(self, model_path, max_dist=0.2, min_confidence=0.3, nms_max_overlap=1.0, 
+          max_iou_distance=0.7, max_age=70, n_init=3, nn_budget=100, use_cuda=True):
         self.min_confidence = min_confidence
         self.nms_max_overlap = nms_max_overlap #0.7
-        #max_age,表示在一条轨迹在被删除之前允许的最大miss次数?
         self.tracker = Tracker(max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
 
     def update(self, bbox_xywh, confidences, ori_img):
@@ -26,7 +26,7 @@ class DeepSort(object):
         # run on non-maximum supression
         boxes = np.array([d.tlwh for d in detections])
         scores = np.array([d.confidence for d in detections])
-        indices = non_max_suppression(boxes, self.nms_max_overlap, scores) #模型出来的检出框这里还做一次nms
+        indices = non_max_suppression(boxes, self.nms_max_overlap, scores) 
         detections = [detections[i] for i in indices]
 
         # update tracker

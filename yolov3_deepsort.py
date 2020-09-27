@@ -39,7 +39,6 @@ class VideoTracker(object):
         self.deepsort = build_tracker(cfg, use_cuda=use_cuda)
         #self.class_names = self.detector.class_names
 
-    #上下文管理器,with的时候调用
     def __enter__(self):
         if self.args.cam != -1:
             ret, frame = self.vdo.read()
@@ -121,7 +120,6 @@ class VideoTracker(object):
             cls_conf = cls_conf[mask]
 
             # do tracking
-            # 怀疑update改动了bbox_xywh里面的值,引起了形变?
             outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
             #import ipdb 
             #ipdb.set_trace()
