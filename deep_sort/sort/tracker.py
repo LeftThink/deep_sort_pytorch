@@ -4,6 +4,7 @@ import numpy as np
 from . import kalman_filter
 from . import linear_assignment
 from . import iou_matching
+from . import cd_matching
 from .track import Track
 
 
@@ -39,6 +40,7 @@ class Tracker:
 
     def __init__(self, max_iou_distance=0.7, max_age=70, n_init=3):
         self.max_iou_distance = max_iou_distance
+        self.max_cd_distance = 0.6
         self.max_age = max_age
         self.n_init = n_init
         self.kf = None 
@@ -80,6 +82,9 @@ class Tracker:
         matches, unmatched_tracks, unmatched_detections = \
             linear_assignment.min_cost_matching(iou_matching.iou_cost, self.max_iou_distance, 
                 self.tracks, detections)        
+        # matches, unmatched_tracks, unmatched_detections = \
+        #     linear_assignment.min_cost_matching(cd_matching.cd_cost, self.max_cd_distance, 
+        #         self.tracks, detections)      
         return matches, unmatched_tracks, unmatched_detections
 
     def _initiate_track(self, detection):

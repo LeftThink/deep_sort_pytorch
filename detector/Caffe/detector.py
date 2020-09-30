@@ -33,6 +33,16 @@ class SSD(object):
                 y1 = min(box[6] * _img_h, _img_h)
                 cx = (x0+x1)/2.
                 cy = (y0+y1)/2.
+                #just for test
+                # x0 = cx - 160
+                # y0 = cy - 160
+                # x1 = cx + 160
+                # y1 = cy + 160
+                # x0 = max(x0, 0)
+                # y0 = max(y0, 0)
+                # x1 = min(x1, _img_w)
+                # y1 = min(y1, _img_h)
+
                 bbox_xywh.append([cx,cy,x1-x0,y1-y0])
                 cls_conf.append(score)
                 cls_ids.append(box[1])

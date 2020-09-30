@@ -3,6 +3,7 @@ import cv2
 import time
 import argparse
 import caffe 
+import math 
 import torch
 import warnings
 import numpy as np
@@ -21,6 +22,8 @@ class VideoTracker(object):
         self.args = args
         self.video_path = video_path
         self.logger = get_logger("root")
+        self.det_size_wind = []
+        self.stable_size = None
 
         use_cuda = args.use_cuda and torch.cuda.is_available()
         if not use_cuda:
@@ -106,7 +109,22 @@ class VideoTracker(object):
             if len(bbox_xywh) == 0:
                 continue
 
-            #for test
+            #for stable 
+            for b in bbox_xywh:
+                self.det_size_wind.append(math.sqrt(b[2]*b[3]))
+                if len(self.det_size_wind) > 10:
+                    self.stable_size = np.mean(self.det_size_wind)
+                    break
+            if self.stable_size is not None:
+                for b in bbox_xywh:
+                    s = self.stable_size/2.
+                    x0 = max(b[0]-s,0)
+                    y0 = max(b[1]-s,0)
+                    x1 = min(b[0]+s,self.im_width)
+                    y1 = min(b[1]+s,self.im_height)
+                    b[2] = x1-x0
+                    b[3] = y1-y0 
+            # for test
             # for b in bbox_xywh:
             #     cv2.rectangle(ori_im,(int(b[0]),int(b[1])),(int(b[0])+int(b[2]),int(b[1])+int(b[3])),(255,0,0),1,0)
             # cv2.imshow('preview', ori_im)
@@ -118,7 +136,6 @@ class VideoTracker(object):
             # bbox dilation just in case bbox too small, delete this line if using a better pedestrian detector
             #bbox_xywh[:, 3:] *= 1.2
             cls_conf = cls_conf[mask]
-
             # do tracking
             outputs = self.deepsort.update(bbox_xywh, cls_conf, im)
             #import ipdb 

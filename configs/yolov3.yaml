@@ -23,6 +23,10 @@ SSD:
   # WEIGHT: "/home/liyang/models/pc_0914/model-D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x3_C3_320x180_20200914/backup/D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x3_C3_320x180_20200914_snapshot_iter_202000.caffemodel"
   # SCORE_THRESH: 0.6
 
-  PROTOTXT: "/home/liyang/models/pc_0919/model-D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x4_C2_320x180_20200919/deploy.prototxt"
-  WEIGHT: "/home/liyang/models/pc_0919/model-D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x4_C2_320x180_20200919/backup/D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x4_C2_320x180_20200919_snapshot_iter_234000.caffemodel"
-  SCORE_THRESH: 0.8
+  # PROTOTXT: "/home/liyang/models/pc_0919/model-D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x4_C2_320x180_20200919/deploy.prototxt"
+  # WEIGHT: "/home/liyang/models/pc_0919/model-D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x4_C2_320x180_20200919/backup/D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x4_C2_320x180_20200919_snapshot_iter_234000.caffemodel"
+  # SCORE_THRESH: 0.8
+
+  PROTOTXT: "./detector/Caffe/model-D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x4_C2_320x180_20200925/deploy.prototxt"
+  WEIGHT: "/home/liyang/models/pc_0925/model-D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x4_C2_320x180_20200925/backup/D2_TLD_SSD-KYSiNetV4_VGG_8X_H3_v2_FPN_H3A16x4_C2_320x180_20200925_snapshot_iter_210000.caffemodel"
+  SCORE_THRESH: 0.7 

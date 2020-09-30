@@ -15,6 +15,8 @@ class DeepSort(object):
           max_iou_distance=0.7, max_age=70, n_init=3, nn_budget=100, use_cuda=True):
         self.min_confidence = min_confidence
         self.nms_max_overlap = nms_max_overlap #0.7
+        # import ipdb 
+        # ipdb.set_trace()
         self.tracker = Tracker(max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
 
     def update(self, bbox_xywh, confidences, ori_img):
@@ -36,7 +38,9 @@ class DeepSort(object):
         # output bbox identities
         outputs = []
         for track in self.tracker.tracks:
-            if not track.is_confirmed() or track.time_since_update > 1:
+            if not track.is_confirmed() or track.time_since_update >1:
+            #if not track.is_confirmed() or track.time_since_update >= 1:
+            #if not track.is_confirmed():
                 continue
             box = track.to_tlwh()
             x1,y1,x2,y2 = self._tlwh_to_xyxy(box)
@@ -47,6 +51,9 @@ class DeepSort(object):
 
         #import ipdb 
         #ipdb.set_trace()
+        # if len(detections) != len(outputs):
+        #     for t in self.tracker.tracks:
+        #         print(t.time_since_update)
 
         return outputs
 

@@ -27,6 +27,9 @@ def iou(bbox, candidates):
     candidates_tl = candidates[:, :2]
     candidates_br = candidates[:, :2] + candidates[:, 2:]
 
+    # import ipdb 
+    # ipdb.set_trace()
+    
     tl = np.c_[np.maximum(bbox_tl[0], candidates_tl[:, 0])[:, np.newaxis],
                np.maximum(bbox_tl[1], candidates_tl[:, 1])[:, np.newaxis]]
     br = np.c_[np.minimum(bbox_br[0], candidates_br[:, 0])[:, np.newaxis],
@@ -72,9 +75,9 @@ def iou_cost(tracks, detections, track_indices=None,
     # 初始化NxM cost矩阵,N为track,M为detection
     cost_matrix = np.zeros((len(track_indices), len(detection_indices)))
     for row, track_idx in enumerate(track_indices):
-        if tracks[track_idx].time_since_update > 1:
-            cost_matrix[row, :] = linear_assignment.INFTY_COST #先给个大值
-            continue
+        # if tracks[track_idx].time_since_update > 1:
+        #     cost_matrix[row, :] = linear_assignment.INFTY_COST #先给个大值
+        #     continue
 
         bbox = tracks[track_idx].to_tlwh() #这个box来自于track,但是这个track中的box是带预测性质的...
         candidates = np.asarray([detections[i].tlwh for i in detection_indices])
