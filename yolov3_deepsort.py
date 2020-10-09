@@ -1,5 +1,6 @@
 import os
 import cv2
+import math 
 import time
 import argparse
 import caffe 
@@ -21,6 +22,8 @@ class VideoTracker(object):
         self.args = args
         self.video_path = video_path
         self.logger = get_logger("root")
+        self.det_size_wind = []
+        self.stable_size = None
 
         use_cuda = args.use_cuda and torch.cuda.is_available()
         if not use_cuda:
@@ -106,6 +109,22 @@ class VideoTracker(object):
             # add by bigz
             if len(bbox_xywh) == 0:
                 continue
+            
+            #for stable 
+            for b in bbox_xywh:
+                self.det_size_wind.append(math.sqrt(b[2]*b[3]))
+                if len(self.det_size_wind) > 10:
+                    self.stable_size = np.mean(self.det_size_wind)
+                    break
+            if self.stable_size is not None:
+                for b in bbox_xywh:
+                    s = self.stable_size/2.
+                    x0 = max(b[0]-s,0)
+                    y0 = max(b[1]-s,0)
+                    x1 = min(b[0]+s,self.im_width)
+                    y1 = min(b[1]+s,self.im_height)
+                    b[2] = x1-x0
+                    b[3] = y1-y0
 
             #for test
             # for b in bbox_xywh:

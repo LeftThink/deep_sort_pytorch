@@ -17,8 +17,9 @@ in_passenger_cnt = 0
 out_passenger_cnt = 0
 passenger_cnt_stat = edict({})
 
-def draw_boxes(img, bbox, identities=None, offset=(0,0)):
+def draw_boxes(org_img, bbox, identities=None, offset=(0,0)):
     global in_passenger_cnt,out_passenger_cnt
+    img = np.copy(org_img)
     for i,box in enumerate(bbox):
         x1,y1,x2,y2 = [int(i) for i in box]
         x1 += offset[0]
@@ -32,6 +33,7 @@ def draw_boxes(img, bbox, identities=None, offset=(0,0)):
         # box text and bar
         id = int(identities[i]) if identities is not None else 0    
         key = str(id)
+
         if tracks.get(key) is None:
             tracks[key] = []
         else:
@@ -50,7 +52,9 @@ def draw_boxes(img, bbox, identities=None, offset=(0,0)):
         cv2.rectangle(img,(x1,y1),(x2,y2),color,3)
         cv2.rectangle(img,(x1,y1),(x1+t_size[0]+3,y1+t_size[1]+4),color,-1)
         cv2.putText(img,label,(x1,y1+t_size[1]+4), cv2.FONT_HERSHEY_PLAIN, 2, [255,255,255], 2)
-    
+        import uuid 
+        box_img = org_img[y1:y2,x1:x2]
+        cv2.imwrite("images/{:s}_{:s}.jpg".format(key,str(uuid.uuid4())), box_img)
         h,w,_ = img.shape
         # up_line = int(h*1/4.+h*1/8.)
         # down_line = int(h*3/4.-h*1/8.)

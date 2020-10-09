@@ -143,7 +143,8 @@ class Tracker:
             # cost_matrix = linear_assignment.gate_cost_matrix(
             #     self.kf, cost_matrix, tracks, dets, track_indices,
             #     detection_indices)
-
+            # import ipdb 
+            # ipdb.set_trace()
             return cost_matrix
 
         # Split track set into confirmed and unconfirmed tracks.
